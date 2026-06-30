@@ -1,7 +1,8 @@
 {
   "functions": {
-    "api/gerar.js": { "maxDuration": 30 },
-    "api/surpreenda.js": { "maxDuration": 30 },
-    "api/salvar-perfil.js": { "maxDuration": 10 }
+    "api/gerar.js":        { "maxDuration": 30 },
+    "api/surpreenda.js":   { "maxDuration": 30 },
+    "api/salvar-perfil.js":{ "maxDuration": 10 },
+    "api/visagismo.js":    { "maxDuration": 30 }
   }
 }
