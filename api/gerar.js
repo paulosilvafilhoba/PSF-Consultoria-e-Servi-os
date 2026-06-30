@@ -1,15 +1,16 @@
 // ════════════════════════════════════════════════════════════════════
 // IA NO BOLSO — Backend genérico (Vercel Function)
 // Protege a chave da Anthropic para TODOS os artefatos do livro
+// Agora também registra cada geração no Supabase para acompanhamento.
 // ════════════════════════════════════════════════════════════════════
 // Rota: POST /api/gerar
-// Body esperado: { "prompt": "...", "system": "..." (opcional) }
+// Body esperado: { "prompt": "...", "system": "..." (opcional), "artefato": "..." (opcional) }
 //
 // Esta única função atende aos 10 artefatos do livro (culinária,
 // visagismo, finanças, CV, viagem, histórias, resumidor, diagnóstico
 // de PC, culinária por perfil). Cada HTML envia seu próprio prompt
-// já formatado — esta função apenas repassa para a Anthropic com a
-// chave protegida e devolve a resposta.
+// já formatado — esta função repassa para a Anthropic com a chave
+// protegida, devolve a resposta, e grava o registro no Supabase.
 // ════════════════════════════════════════════════════════════════════
 
 export default async function handler(req, res) {
@@ -29,13 +30,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { prompt, system, maxTokens } = req.body;
+    const { prompt, system, maxTokens, artefato } = req.body;
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       return res.status(400).json({ erro: 'O campo "prompt" é obrigatório.' });
     }
 
-    // Limite de segurança — evita prompts absurdamente longos consumindo cota
     if (prompt.length > 8000) {
       return res.status(400).json({ erro: 'Texto muito longo. Reduza o conteúdo e tente novamente.' });
     }
@@ -63,10 +63,32 @@ export default async function handler(req, res) {
 
     const dados = await resposta.json();
     const texto = dados.content[0].text;
+    const tokensEntrada = dados.usage?.input_tokens || null;
+    const tokensSaida = dados.usage?.output_tokens || null;
 
-    return res.status(200).json({ resultado: texto });
+    res.status(200).json({ resultado: texto });
+
+    if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+      fetch(`${process.env.SUPABASE_URL}/rest/v1/geracoes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': process.env.SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          artefato: artefato || 'desconhecido',
+          prompt: prompt,
+          resultado: texto,
+          tokens_entrada: tokensEntrada,
+          tokens_saida: tokensSaida,
+        }),
+      }).catch(erro => console.error('Falha ao salvar geração no Supabase:', erro));
+    }
   } catch (erro) {
     console.error('Erro no servidor:', erro);
-    return res.status(500).json({ erro: 'Erro interno. Tente novamente.' });
+    if (!res.headersSent) {
+      return res.status(500).json({ erro: 'Erro interno. Tente novamente.' });
+    }
   }
 }
