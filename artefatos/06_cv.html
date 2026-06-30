@@ -1,34 +1,77 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>📄 Gerador de CV — IA no Bolso</title>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>💼 Gerador de Currículo — IA no Bolso</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',Arial,sans-serif;background:#0D1B2A;color:#F5F2EC;min-height:100vh;display:flex;flex-direction:column}
 .header{background:#08111E;border-bottom:2px solid #B8860B;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .logo{height:40px;width:auto}
 .header-title{font-size:13px;color:#7A9CC8;letter-spacing:0.5px}
-.main{flex:1;padding:32px 24px;max-width:700px;margin:0 auto;width:100%}
-h1{font-size:26px;font-weight:800;color:#F5F2EC;margin-bottom:6px}
-.sub{font-size:14px;color:#7A9CC8;font-style:italic;margin-bottom:28px;line-height:1.6;font-family:Georgia,serif}
-label{display:block;font-size:12px;font-weight:600;color:#B8860B;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;margin-top:16px}
-input,textarea,select{width:100%;background:#08111E;border:1.5px solid #1A3A6B;border-radius:6px;padding:10px 14px;color:#F5F2EC;font-size:14px;font-family:inherit;outline:none;transition:border .2s;resize:vertical}
+.main{flex:1;padding:28px 20px;max-width:700px;margin:0 auto;width:100%}
+h1{font-size:24px;font-weight:800;color:#F5F2EC;margin-bottom:6px}
+.sub{font-size:14px;color:#7A9CC8;font-style:italic;margin-bottom:24px;line-height:1.6;font-family:Georgia,serif}
+
+/* Progresso */
+.progress-bar{background:#08111E;border-radius:6px;height:6px;margin-bottom:24px;overflow:hidden}
+.progress-fill{height:100%;background:#B8860B;border-radius:6px;transition:width .4s}
+.step-label{font-size:11px;color:#4A6A9A;margin-bottom:20px;text-align:center;letter-spacing:1px}
+
+/* Steps */
+.step{display:none}
+.step.active{display:block}
+.step-title{font-size:18px;font-weight:700;color:#F5F2EC;margin-bottom:4px}
+.step-sub{font-size:13px;color:#7A9CC8;margin-bottom:20px;font-family:Georgia,serif}
+
+/* Inputs */
+label{display:block;font-size:11px;font-weight:600;color:#B8860B;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;margin-top:14px}
+input,textarea,select{width:100%;background:#08111E;border:1.5px solid #1A3A6B;border-radius:6px;padding:10px 13px;color:#F5F2EC;font-size:14px;font-family:inherit;outline:none;transition:border .2s;resize:vertical}
 input:focus,textarea:focus,select:focus{border-color:#B8860B}
-textarea{min-height:100px}
-.btn{background:#B8860B;color:#08111E;border:none;border-radius:6px;padding:13px 28px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-top:20px;transition:background .2s;letter-spacing:0.5px}
+textarea{min-height:80px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.row2{grid-template-columns:1fr}}
+
+/* Botões nav */
+.nav-btns{display:flex;gap:10px;margin-top:24px}
+.btn{background:#B8860B;color:#08111E;border:none;border-radius:6px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;flex:1;transition:background .2s}
 .btn:hover{background:#D4A00D}
 .btn:disabled{background:#4A3A1A;color:#6A5A2A;cursor:not-allowed}
-.result{background:#0A1520;border:1.5px solid #1A3A6B;border-radius:8px;padding:20px;margin-top:24px;display:none}
-.result.show{display:block}
-.result-label{font-size:11px;color:#B8860B;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;font-weight:600}
-.result-content{font-size:15px;line-height:1.8;color:#E5E2D8;font-family:Georgia,serif;white-space:pre-wrap}
+.btn-sec{background:transparent;color:#7A9CC8;border:1.5px solid #1A3A6B;border-radius:6px;padding:12px 20px;font-size:14px;cursor:pointer;transition:all .2s;flex:0 0 auto}
+.btn-sec:hover{border-color:#7A9CC8;color:#F5F2EC}
+
+/* Experiências dinâmicas */
+.exp-card{background:#08111E;border:1.5px solid #1A3A6B;border-radius:8px;padding:14px;margin-bottom:12px;position:relative}
+.exp-card .remove-btn{position:absolute;top:10px;right:10px;background:transparent;border:none;color:#4A6A9A;cursor:pointer;font-size:16px;line-height:1}
+.exp-card .remove-btn:hover{color:#E89A9A}
+.add-btn{width:100%;padding:10px;border-radius:6px;border:1.5px dashed #1A3A6B;background:transparent;color:#7A9CC8;font-size:13px;cursor:pointer;margin-top:8px;transition:all .2s}
+.add-btn:hover{border-color:#B8860B;color:#B8860B}
+
+/* Spinner */
 .spinner{display:inline-block;width:18px;height:18px;border:2.5px solid #4A3A1A;border-top-color:#B8860B;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.footer{text-align:center;padding:16px;font-size:11px;color:#3A5A7A;border-top:1px solid #0F2035}
-.aviso{background:#1A0F00;border:1px solid #4A3A00;border-radius:6px;padding:12px 16px;font-size:12px;color:#B8860B;margin-bottom:20px;line-height:1.6}
-.erro{background:#1A0F0F;border:1px solid #4A1A1A;border-radius:6px;padding:12px 16px;font-size:13px;color:#E89A9A;margin-top:16px}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:500px){.row2{grid-template-columns:1fr}}
+
+/* Resultado */
+.result-area{display:none}
+.result-area.show{display:block}
+.result-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.act-btn{flex:1;min-width:130px;padding:11px;border-radius:6px;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;text-align:center}
+.act-btn.primary{background:#B8860B;color:#08111E}
+.act-btn.primary:hover{background:#D4A00D}
+.act-btn.secondary{background:#0A2040;color:#7A9CC8;border:1.5px solid #1A3A6B}
+.act-btn.secondary:hover{border-color:#7A9CC8;color:#F5F2EC}
+.cv-preview{background:#fff;color:#111;border-radius:8px;padding:32px;font-size:14px;line-height:1.7;font-family:'Georgia',serif}
+.erro{background:#1A0F0F;border:1px solid #4A1A1A;border-radius:6px;padding:12px 16px;font-size:13px;color:#E89A9A;margin-top:16px;display:none}
+.footer{text-align:center;padding:16px;font-size:11px;color:#3A5A7A;border-top:1px solid #0F2035;margin-top:20px}
+
+/* CV imprimível */
+@media print{
+  body{background:#fff!important;color:#000!important}
+  .header,.nav-btns,.result-actions,.footer,.progress-bar,.step-label,h1,.sub,.step{display:none!important}
+  .result-area{display:block!important}
+  .cv-preview{box-shadow:none;border:none;padding:0}
+}
 </style>
 </head>
 <body>
@@ -36,90 +79,396 @@ textarea{min-height:100px}
   <img src="../Logo%20PSF.png" class="logo" alt="PSF">
   <span class="header-title">IA no Bolso · Capítulo 8 · Carreira</span>
 </header>
+
 <main class="main">
-  <h1>📄 Gerador de CV</h1>
-  <p class="sub">Preencha seus dados e receba um currículo profissional e carta de apresentação prontos.</p>
-  
-  
-<label>Nome completo</label><input id="nome" placeholder="Seu nome completo">
-<div class="row2">
-  <div><label>E-mail</label><input id="email" placeholder="seu@email.com"></div>
-  <div><label>Telefone</label><input id="tel" placeholder="(00) 90000-0000"></div>
-</div>
-<label>Cidade e Estado</label><input id="cidade" placeholder="Ex: Salvador, BA">
-<label>Cargo / Área desejada</label><input id="cargo" placeholder="Ex: Analista de Marketing...">
-<label>Resumo profissional</label><textarea id="resumo" rows="3" placeholder="Sua experiência e destaque..."></textarea>
-<label>Experiências (uma por linha: cargo — empresa — período)</label>
-<textarea id="exp" rows="4" placeholder="Vendedor Sênior — Empresa XYZ — 2021 a 2024"></textarea>
-<label>Formação acadêmica</label><textarea id="form" rows="2" placeholder="Graduação em Administração — UFBA — 2019"></textarea>
-<label>Habilidades</label><input id="skills" placeholder="Excel, CRM, liderança...">
-<label>Vaga específica (cole a descrição, opcional)</label><textarea id="vaga" rows="3"></textarea>
-<button class="btn" id="btn" data-label="📄 Gerar CV + Carta" onclick="gerar()">📄 Gerar CV + Carta de Apresentação</button>
+  <h1>💼 Gerador de Currículo</h1>
+  <p class="sub">Preencha as informações em 4 etapas e receba um currículo profissional pronto para baixar.</p>
 
-  <div class="result" id="result">
-    <div class="result-label">✨ Resultado da IA</div>
-    <div class="result-content" id="result-text"></div>
+  <div class="progress-bar"><div class="progress-fill" id="prog" style="width:25%"></div></div>
+  <div class="step-label" id="step-label">Etapa 1 de 4 — Dados pessoais</div>
+
+  <!-- ETAPA 1: Dados pessoais -->
+  <div class="step active" id="step1">
+    <div class="step-title">👤 Dados pessoais</div>
+    <div class="step-sub">Informações de contato e objetivo profissional.</div>
+
+    <label>Nome completo *</label>
+    <input id="nome" placeholder="Ex: Maria da Silva">
+
+    <div class="row2">
+      <div>
+        <label>Cidade e Estado *</label>
+        <input id="cidade" placeholder="Ex: Salvador – BA">
+      </div>
+      <div>
+        <label>Telefone</label>
+        <input id="telefone" placeholder="(71) 99999-9999">
+      </div>
+    </div>
+
+    <div class="row2">
+      <div>
+        <label>E-mail *</label>
+        <input id="email" type="email" placeholder="seu@email.com">
+      </div>
+      <div>
+        <label>LinkedIn / Site (opcional)</label>
+        <input id="linkedin" placeholder="linkedin.com/in/seuperfil">
+      </div>
+    </div>
+
+    <label>Vaga desejada / Objetivo *</label>
+    <input id="vaga" placeholder="Ex: Analista de Marketing Digital">
+
+    <label>Resumo pessoal (opcional — a IA cria se não preencher)</label>
+    <textarea id="resumo" rows="3" placeholder="Profissional com X anos de experiência em..."></textarea>
+
+    <div class="nav-btns">
+      <button class="btn" onclick="ir(2)">Próximo →</button>
+    </div>
   </div>
-</main>
-<footer class="footer">
-  IA no Bolso — Paulo da Silva Filho · <a href="https://www.psfeditoraeconsultoria.com.br" style="color:#3A5A7A">psfeditoraeconsultoria.com.br</a>
-</footer>
-<script>
-const BACKEND_URL = 'https://psf-consultoria-backend.vercel.app'; // Paulo: troque pela URL real após o deploy
 
-async function chamarBackend(prompt, system, maxTokens) {
-  const resp = await fetch(`${BACKEND_URL}/api/gerar`, {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ prompt, system, maxTokens, artefato: '06_cv' })
-  });
-  const data = await resp.json();
-  if (!resp.ok || data.erro) throw new Error(data.erro || 'Erro ao gerar resposta.');
-  return data.resultado;
+  <!-- ETAPA 2: Experiência -->
+  <div class="step" id="step2">
+    <div class="step-title">💼 Experiência profissional</div>
+    <div class="step-sub">Adicione suas experiências da mais recente para a mais antiga.</div>
+
+    <div id="exps"></div>
+    <button class="add-btn" onclick="addExp()">+ Adicionar experiência</button>
+
+    <div class="nav-btns">
+      <button class="btn-sec" onclick="ir(1)">← Voltar</button>
+      <button class="btn" onclick="ir(3)">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- ETAPA 3: Formação e habilidades -->
+  <div class="step" id="step3">
+    <div class="step-title">🎓 Formação e habilidades</div>
+    <div class="step-sub">Educação, cursos e competências que você quer destacar.</div>
+
+    <div id="forms"></div>
+    <button class="add-btn" onclick="addForm()">+ Adicionar formação</button>
+
+    <label style="margin-top:20px">Habilidades técnicas</label>
+    <textarea id="habilidades" rows="3" placeholder="Ex: Excel avançado, Python, Photoshop, CRM Salesforce, Pacote Office..."></textarea>
+
+    <label>Habilidades comportamentais</label>
+    <textarea id="comportamentais" rows="2" placeholder="Ex: Liderança, comunicação, trabalho em equipe, proatividade..."></textarea>
+
+    <label>Idiomas (opcional)</label>
+    <input id="idiomas" placeholder="Ex: Inglês intermediário, Espanhol básico">
+
+    <div class="nav-btns">
+      <button class="btn-sec" onclick="ir(2)">← Voltar</button>
+      <button class="btn" onclick="ir(4)">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- ETAPA 4: Personalização -->
+  <div class="step" id="step4">
+    <div class="step-title">✨ Personalização final</div>
+    <div class="step-sub">Ajuste o tom e o foco do currículo antes de gerar.</div>
+
+    <label>Tom do currículo</label>
+    <select id="tom">
+      <option value="profissional e objetivo">Profissional e objetivo</option>
+      <option value="dinâmico e moderno">Dinâmico e moderno</option>
+      <option value="formal e conservador">Formal e conservador</option>
+      <option value="criativo e diferenciado">Criativo e diferenciado</option>
+    </select>
+
+    <label>Área de atuação (para o estilo da linguagem)</label>
+    <select id="area">
+      <option value="comercial e vendas">Comercial e Vendas</option>
+      <option value="tecnologia e TI">Tecnologia e TI</option>
+      <option value="saúde">Saúde</option>
+      <option value="educação">Educação</option>
+      <option value="administrativo e financeiro">Administrativo e Financeiro</option>
+      <option value="marketing e comunicação">Marketing e Comunicação</option>
+      <option value="engenharia e construção">Engenharia e Construção</option>
+      <option value="jurídico">Jurídico</option>
+      <option value="recursos humanos">Recursos Humanos</option>
+      <option value="geral">Geral / Outra área</option>
+    </select>
+
+    <label>Descrição da vaga (opcional — cole o anúncio para personalizar o currículo)</label>
+    <textarea id="descvaga" rows="4" placeholder="Cole aqui a descrição completa da vaga para que o currículo seja personalizado para ela..."></textarea>
+
+    <label>Gerar carta de apresentação?</label>
+    <select id="carta">
+      <option value="sim">Sim — gerar carta junto</option>
+      <option value="nao">Não — só o currículo</option>
+    </select>
+
+    <div class="nav-btns">
+      <button class="btn-sec" onclick="ir(3)">← Voltar</button>
+      <button class="btn" id="btn-gerar" onclick="gerar()">🚀 Gerar currículo</button>
+    </div>
+  </div>
+
+  <!-- Resultado -->
+  <div class="result-area" id="result-area">
+    <div class="result-actions">
+      <button class="act-btn primary" onclick="baixarHTML()">⬇️ Baixar HTML</button>
+      <button class="act-btn secondary" onclick="imprimirPDF()">🖨️ Imprimir / Salvar PDF</button>
+      <button class="act-btn secondary" onclick="copiarTexto()">📋 Copiar texto</button>
+      <button class="act-btn secondary" onclick="refazer()">✏️ Editar dados</button>
+    </div>
+    <div class="cv-preview" id="cv-preview"></div>
+  </div>
+
+  <div class="erro" id="erro-box"></div>
+</main>
+
+<footer class="footer">
+  IA no Bolso — Paulo da Silva Filho ·
+  <a href="https://www.psfeditoraeconsultoria.com.br" style="color:#3A5A7A">psfeditoraeconsultoria.com.br</a>
+</footer>
+
+<script>
+const BACKEND_URL = 'https://psf-consultoria-backend.vercel.app';
+let expCount = 0;
+let formCount = 0;
+let cvTexto = '';
+let cvHTML = '';
+
+// Inicializa com 1 experiência e 1 formação
+addExp();
+addForm();
+
+function ir(n) {
+  if (n > 1 && !validarStep()) return;
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step'+n).classList.add('active');
+  const labels = ['','Dados pessoais','Experiência profissional','Formação e habilidades','Personalização final'];
+  document.getElementById('step-label').textContent = `Etapa ${n} de 4 — ${labels[n]}`;
+  document.getElementById('prog').style.width = (n*25)+'%';
+  window.scrollTo({top:0,behavior:'smooth'});
 }
-function showResult(text) {
-  const r = document.getElementById('result');
-  r.classList.add('show');
-  document.getElementById('result-text').textContent = text;
-  r.scrollIntoView({behavior:'smooth'});
-}
-function showError(msg) {
-  let e = document.getElementById('erro-box');
-  if(!e){
-    e = document.createElement('div');
-    e.id = 'erro-box';
-    e.className = 'erro';
-    document.getElementById('result').insertAdjacentElement('beforebegin', e);
+
+function validarStep() {
+  const ativos = document.querySelector('.step.active').id;
+  if (ativos === 'step1') {
+    if (!v('nome')) { alert('Preencha seu nome completo.'); return false; }
+    if (!v('email')) { alert('Preencha seu e-mail.'); return false; }
+    if (!v('vaga')) { alert('Preencha o objetivo / vaga desejada.'); return false; }
+    if (!v('cidade')) { alert('Preencha sua cidade.'); return false; }
   }
+  return true;
+}
+
+function v(id) { return document.getElementById(id)?.value?.trim() || ''; }
+
+function addExp() {
+  expCount++;
+  const id = 'exp'+expCount;
+  const div = document.createElement('div');
+  div.className = 'exp-card';
+  div.id = id;
+  div.innerHTML = `
+    <button class="remove-btn" onclick="remover('${id}')" title="Remover">✕</button>
+    <div class="row2">
+      <div><label>Cargo *</label><input class="cargo" placeholder="Ex: Atendente Comercial"></div>
+      <div><label>Empresa *</label><input class="empresa" placeholder="Ex: Empresa Ltda"></div>
+    </div>
+    <div class="row2">
+      <div><label>Período *</label><input class="periodo" placeholder="Jan/2024 – Atual"></div>
+      <div><label>Cidade</label><input class="cidade-exp" placeholder="Salvador, BA"></div>
+    </div>
+    <label>Principais atividades *</label>
+    <textarea class="atividades" rows="3" placeholder="Descreva as principais funções e realizações..."></textarea>
+  `;
+  document.getElementById('exps').appendChild(div);
+}
+
+function addForm() {
+  formCount++;
+  const id = 'form'+formCount;
+  const div = document.createElement('div');
+  div.className = 'exp-card';
+  div.id = id;
+  div.innerHTML = `
+    <button class="remove-btn" onclick="remover('${id}')" title="Remover">✕</button>
+    <div class="row2">
+      <div><label>Curso / Grau *</label><input class="curso" placeholder="Ex: Ensino Médio Completo"></div>
+      <div><label>Instituição *</label><input class="inst" placeholder="Ex: Colégio Estadual"></div>
+    </div>
+    <div class="row2">
+      <div><label>Conclusão / Previsão *</label><input class="concl" placeholder="Ex: 2022 ou Em andamento"></div>
+      <div><label>Cidade</label><input class="cidade-form" placeholder="Salvador, BA"></div>
+    </div>
+  `;
+  document.getElementById('forms').appendChild(div);
+}
+
+function remover(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function coletarDados() {
+  const exps = [...document.querySelectorAll('#exps .exp-card')].map(c => ({
+    cargo: c.querySelector('.cargo')?.value || '',
+    empresa: c.querySelector('.empresa')?.value || '',
+    periodo: c.querySelector('.periodo')?.value || '',
+    cidade: c.querySelector('.cidade-exp')?.value || '',
+    atividades: c.querySelector('.atividades')?.value || '',
+  })).filter(e => e.cargo && e.empresa);
+
+  const forms = [...document.querySelectorAll('#forms .exp-card')].map(c => ({
+    curso: c.querySelector('.curso')?.value || '',
+    inst: c.querySelector('.inst')?.value || '',
+    concl: c.querySelector('.concl')?.value || '',
+    cidade: c.querySelector('.cidade-form')?.value || '',
+  })).filter(f => f.curso && f.inst);
+
+  return {
+    nome: v('nome'), cidade: v('cidade'), telefone: v('telefone'),
+    email: v('email'), linkedin: v('linkedin'), vaga: v('vaga'),
+    resumo: v('resumo'), habilidades: v('habilidades'),
+    comportamentais: v('comportamentais'), idiomas: v('idiomas'),
+    tom: v('tom'), area: v('area'), descvaga: v('descvaga'),
+    carta: v('carta'), exps, forms,
+  };
+}
+
+async function gerar() {
+  const d = coletarDados();
+  if (!d.exps.length && !d.forms.length) {
+    mostrarErro('Adicione pelo menos uma experiência ou formação.'); return;
+  }
+  esconderErro();
+  const btn = document.getElementById('btn-gerar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Gerando...';
+
+  const expsTexto = d.exps.map(e =>
+    `• ${e.cargo} | ${e.empresa} — ${e.cidade} | ${e.periodo}\n  ${e.atividades}`
+  ).join('\n\n');
+
+  const formsTexto = d.forms.map(f =>
+    `• ${f.curso} | ${f.inst} — ${f.cidade} | ${f.concl}`
+  ).join('\n');
+
+  const vagaBloco = d.descvaga
+    ? `\nVAGA PARA A QUAL ESTÁ SE CANDIDATANDO:\n${d.descvaga}\n(Adapte o currículo para destacar o que é mais relevante para essa vaga especificamente.)`
+    : '';
+
+  const cartaBloco = d.carta === 'sim'
+    ? '\n\nApós o currículo, gere também uma CARTA DE APRESENTAÇÃO profissional de 3 parágrafos personalizada para a vaga e empresa mencionadas.'
+    : '';
+
+  const prompt = `Você é um especialista em recrutamento e seleção com 15 anos de experiência criando currículos profissionais.
+
+Crie um currículo PROFISSIONAL e COMPLETO em HTML puro para uso imediato, com as seguintes informações:
+
+DADOS PESSOAIS:
+Nome: ${d.nome}
+Localização: ${d.cidade}
+Telefone: ${d.telefone || 'não informado'}
+E-mail: ${d.email}
+LinkedIn/Site: ${d.linkedin || 'não informado'}
+Objetivo: ${d.vaga}
+Tom desejado: ${d.tom}
+Área: ${d.area}
+${vagaBloco}
+
+RESUMO PROFISSIONAL:
+${d.resumo || '(Crie um resumo profissional impactante com base nas experiências abaixo, máximo 4 linhas, destacando os principais diferenciais para a vaga)'}
+
+EXPERIÊNCIA PROFISSIONAL:
+${expsTexto || 'Nenhuma informada'}
+
+FORMAÇÃO ACADÊMICA:
+${formsTexto || 'Nenhuma informada'}
+
+HABILIDADES TÉCNICAS: ${d.habilidades || 'Não informado'}
+HABILIDADES COMPORTAMENTAIS: ${d.comportamentais || 'Não informado'}
+IDIOMAS: ${d.idiomas || 'Não informado'}
+${cartaBloco}
+
+REGRAS DE FORMATAÇÃO HTML:
+1. Retorne APENAS o HTML do corpo do currículo, sem <!DOCTYPE>, <html>, <head> ou <body>
+2. Use estilos inline para garantir que funcione em qualquer contexto
+3. Layout: fonte Arial/sans-serif, tamanho base 14px, fundo branco (#fff), texto preto (#111)
+4. Cabeçalho: nome em destaque (24px, bold, azul escuro #1a365d), dados de contato em 12px
+5. Seções: títulos em maiúsculas, borda esquerda azul (#2563eb), espaçamento generoso
+6. Experiências: cargo em bold, empresa/período em cinza, bullets para atividades
+7. Habilidades: colunas lado a lado quando possível
+8. Visual limpo, profissional, imprimível — sem cores de fundo em seções, sem gradientes
+9. Máximo 2 páginas equivalentes de conteúdo`;
+
+  try {
+    const resp = await fetch(`${BACKEND_URL}/api/gerar`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ prompt, system: 'Você é especialista em recrutamento. Retorne APENAS o HTML do currículo, sem nenhum texto antes ou depois, sem blocos de markdown.', maxTokens: 2000, artefato: '06_cv' }),
+    });
+    const data = await resp.json();
+    if (!resp.ok || data.erro) throw new Error(data.erro || 'Erro ao gerar.');
+
+    // Limpa markdown fences se vier
+    cvHTML = data.resultado.replace(/```html|```/g, '').trim();
+    cvTexto = cvHTML.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('prog').style.width = '100%';
+    document.getElementById('step-label').textContent = 'Currículo gerado com sucesso ✅';
+    const ra = document.getElementById('result-area');
+    ra.classList.add('show');
+    document.getElementById('cv-preview').innerHTML = cvHTML;
+    ra.scrollIntoView({behavior:'smooth'});
+  } catch(e) {
+    mostrarErro(e.message);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🚀 Gerar currículo';
+}
+
+function baixarHTML() {
+  const doc = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Currículo — ${v('nome')}</title><style>body{font-family:Arial,sans-serif;max-width:900px;margin:40px auto;padding:0 20px}@media print{body{margin:0;max-width:100%}}</style></head><body>${cvHTML}</body></html>`;
+  const blob = new Blob([doc], {type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `curriculo_${v('nome').replace(/\s+/g,'-').toLowerCase()}.html`;
+  a.click();
+}
+
+function imprimirPDF() {
+  const janela = window.open('','_blank');
+  janela.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Currículo</title><style>body{font-family:Arial,sans-serif;max-width:900px;margin:40px auto;padding:0 20px}@media print{body{margin:0;max-width:100%}}</style></head><body>${cvHTML}</body></html>`);
+  janela.document.close();
+  setTimeout(() => { janela.focus(); janela.print(); }, 500);
+}
+
+function copiarTexto() {
+  navigator.clipboard.writeText(cvTexto).then(() => alert('Texto copiado!')).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = cvTexto;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    alert('Texto copiado!');
+  });
+}
+
+function refazer() {
+  document.getElementById('result-area').classList.remove('show');
+  ir(1);
+}
+
+function mostrarErro(msg) {
+  const e = document.getElementById('erro-box');
   e.textContent = '⚠️ ' + msg;
   e.style.display = 'block';
 }
-function setLoading(on) {
-  const btn = document.getElementById('btn');
-  btn.disabled = on;
-  btn.innerHTML = on ? '<span class="spinner"></span>Processando...' : btn.dataset.label;
+
+function esconderErro() {
+  document.getElementById('erro-box').style.display = 'none';
 }
 </script>
-<script>
-async function gerar() {
-  const nome = document.getElementById('nome').value.trim();
-  if(!nome){alert('Informe seu nome!');return;}
-  setLoading(true);
-  try {
-    const temVaga = document.getElementById('vaga').value.trim();
-    const prompt = `Você é especialista em recrutamento e seleção.
-Nome: ${nome} | E-mail: ${document.getElementById('email').value} | Tel: ${document.getElementById('tel').value} | Cidade: ${document.getElementById('cidade').value}
-Cargo desejado: ${document.getElementById('cargo').value}
-Resumo: ${document.getElementById('resumo').value}
-Experiências: ${document.getElementById('exp').value}
-Formação: ${document.getElementById('form').value}
-Habilidades: ${document.getElementById('skills').value}
-${temVaga ? 'Vaga alvo: '+temVaga : ''}
-Crie: 1. CURRÍCULO completo formatado (cabeçalho, objetivo, resumo de qualificações, experiências com verbos de ação, formação, habilidades) 2. CARTA DE APRESENTAÇÃO em 3 parágrafos. Não invente informações.`;
-    const r = await chamarBackend(prompt, 'Você é especialista em RH. Responda em português do Brasil formal.', 1800);
-    showResult(r);
-  } catch(e){showError(e.message);}
-  setLoading(false);
-}
-</script>
-</body></html>
+</body>
+</html>
