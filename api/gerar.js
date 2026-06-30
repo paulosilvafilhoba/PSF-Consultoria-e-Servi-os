@@ -6,12 +6,21 @@
 // Rota: POST /api/gerar
 // Body esperado: { "prompt": "...", "system": "..." (opcional), "artefato": "..." (opcional) }
 //
-// Esta única função atende aos 10 artefatos do livro (culinária,
-// visagismo, finanças, CV, viagem, histórias, resumidor, diagnóstico
-// de PC, culinária por perfil). Cada HTML envia seu próprio prompt
-// já formatado — esta função repassa para a Anthropic com a chave
+// Esta única função atende aos 9 artefatos do livro que usam IA
+// genérica (culinária x2, visagismo, finanças, CV, viagem, histórias,
+// resumidor, diagnóstico de PC). Cada HTML envia seu próprio prompt já
+// formatado — esta função repassa para a Anthropic com a chave
 // protegida, devolve a resposta, e grava o registro no Supabase.
+//
+// IMPORTANTE: depois que a Vercel envia a resposta (res.json), a
+// instância da função pode ser congelada a qualquer momento. Por isso
+// usamos waitUntil() do pacote @vercel/functions — ele garante que o
+// trabalho em segundo plano (salvar no Supabase, estruturar o JSON)
+// termine de rodar antes da função ser encerrada, sem atrasar a
+// resposta que o leitor vê na tela.
 // ════════════════════════════════════════════════════════════════════
+
+import { waitUntil } from '@vercel/functions';
 
 export default async function handler(req, res) {
   // CORS precisa ser definido ANTES de qualquer verificação de método,
@@ -70,15 +79,18 @@ export default async function handler(req, res) {
 
     // Tudo daqui pra baixo roda DEPOIS da resposta já ter sido enviada ao
     // leitor — falhas aqui nunca afetam a experiência de quem está usando
-    // o artefato, só deixam de registrar o histórico.
+    // o artefato, só deixam de registrar o histórico. waitUntil() garante
+    // que a Vercel mantenha a função viva até esse trabalho terminar.
     if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
-      registrarGeracao({
-        artefato: artefato || 'desconhecido',
-        prompt,
-        resultado: texto,
-        tokensEntrada,
-        tokensSaida,
-      }).catch(erro => console.error('Falha ao salvar geração no Supabase:', erro));
+      waitUntil(
+        registrarGeracao({
+          artefato: artefato || 'desconhecido',
+          prompt,
+          resultado: texto,
+          tokensEntrada,
+          tokensSaida,
+        }).catch(erro => console.error('Falha ao salvar geração no Supabase:', erro))
+      );
     }
 
     async function registrarGeracao({ artefato, prompt, resultado, tokensEntrada, tokensSaida }) {
