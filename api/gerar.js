@@ -39,7 +39,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { prompt, system, maxTokens, artefato } = req.body;
+    const { prompt, system, maxTokens, artefato, imagem } = req.body;
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       return res.status(400).json({ erro: 'O campo "prompt" é obrigatório.' });
@@ -47,6 +47,26 @@ export default async function handler(req, res) {
 
     if (prompt.length > 8000) {
       return res.status(400).json({ erro: 'Texto muito longo. Reduza o conteúdo e tente novamente.' });
+    }
+
+    // Monta o conteúdo da mensagem — com ou sem imagem
+    // Se o frontend enviar { imagem: { base64: "...", mediaType: "image/jpeg" } },
+    // a IA recebe a foto e o prompt junto (visão computacional).
+    let mensagemConteudo;
+    if (imagem && imagem.base64 && imagem.mediaType) {
+      mensagemConteudo = [
+        {
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: imagem.mediaType,
+            data: imagem.base64,
+          },
+        },
+        { type: 'text', text: prompt },
+      ];
+    } else {
+      mensagemConteudo = prompt;
     }
 
     const resposta = await fetch('https://api.anthropic.com/v1/messages', {
@@ -60,7 +80,7 @@ export default async function handler(req, res) {
         model: 'claude-sonnet-4-6',
         max_tokens: Math.min(maxTokens || 1200, 2000),
         system: system || 'Você é um assistente especializado e prático. Responda sempre em português do Brasil, com linguagem clara e direta.',
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{ role: 'user', content: mensagemConteudo }],
       }),
     });
 
