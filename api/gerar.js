@@ -13,16 +13,19 @@
 // ════════════════════════════════════════════════════════════════════
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ erro: 'Método não permitido' });
-  }
-
+  // CORS precisa ser definido ANTES de qualquer verificação de método,
+  // senão a requisição OPTIONS (preflight) é rejeitada sem os headers
+  // e o navegador bloqueia a chamada real por política de CORS.
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ erro: 'Método não permitido' });
   }
 
   try {
