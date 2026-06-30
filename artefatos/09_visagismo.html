@@ -292,7 +292,31 @@ function refazer() {
   }
 }
 
-// ── Análise ──────────────────────────────────────────────────────────
+// Redimensiona e comprime a imagem via canvas antes de enviar ao backend.
+// Mantém a proporção original, limita ao maior lado em maxPx pixels,
+// e recodifica como JPEG na qualidade indicada (0–1).
+function comprimirImagem(base64, mediaType, maxPx, qualidade) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width: w, height: h } = img;
+      if (w > maxPx || h > maxPx) {
+        const ratio = Math.min(maxPx / w, maxPx / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = c.toDataURL('image/jpeg', qualidade);
+      resolve(dataUrl.split(',')[1]);
+    };
+    img.onerror = reject;
+    img.src = `data:${mediaType};base64,${base64}`;
+  });
+}
+
+// ── Análise ───────────────────────────────────────────────────────────
 async function analisar() {
   if (!imagemBase64) { mostrarErro('Nenhuma foto carregada.'); return; }
 
@@ -301,6 +325,17 @@ async function analisar() {
 
   setLoading(true);
   esconderErro();
+
+  // Comprime a imagem antes de enviar (máx 800px, qualidade 80%)
+  // Evita ultrapassar o limite de body da Vercel e acelera o envio
+  let base64Envio = imagemBase64;
+  let mediaTypeEnvio = imagemMediaType;
+  try {
+    base64Envio = await comprimirImagem(imagemBase64, imagemMediaType, 800, 0.8);
+    mediaTypeEnvio = 'image/jpeg';
+  } catch (e) {
+    console.warn('Compressão falhou, usando imagem original:', e);
+  }
 
   const prompt = `Você é uma especialista em visagismo com formação em design facial e técnicas de cabeleireiro. Analise a foto enviada.
 
@@ -337,7 +372,7 @@ Use termos técnicos que a pessoa possa mostrar diretamente ao cabeleireiro.`;
         system: 'Você é especialista em visagismo. Responda em português do Brasil com linguagem técnica, clara e direta.',
         maxTokens: 1800,
         artefato: '09_visagismo',
-        imagem: { base64: imagemBase64, mediaType: imagemMediaType },
+        imagem: { base64: base64Envio, mediaType: mediaTypeEnvio },
       }),
     });
 
