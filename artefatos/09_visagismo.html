@@ -326,53 +326,23 @@ async function analisar() {
   setLoading(true);
   esconderErro();
 
-  // Comprime a imagem antes de enviar (máx 800px, qualidade 80%)
-  // Evita ultrapassar o limite de body da Vercel e acelera o envio
+  // Comprime para 480px / 65% → ~40–100 KB em base64, bem abaixo do limite de 4.5 MB da Vercel
   let base64Envio = imagemBase64;
-  let mediaTypeEnvio = imagemMediaType;
   try {
-    base64Envio = await comprimirImagem(imagemBase64, imagemMediaType, 800, 0.8);
-    mediaTypeEnvio = 'image/jpeg';
+    base64Envio = await comprimirImagem(imagemBase64, imagemMediaType, 480, 0.65);
   } catch (e) {
-    console.warn('Compressão falhou, usando imagem original:', e);
+    console.warn('Compressão falhou, usando original:', e);
   }
 
-  const prompt = `Você é uma especialista em visagismo com formação em design facial e técnicas de cabeleireiro. Analise a foto enviada.
-
-Cabelo atual da pessoa: ${cabelo}, comprimento ${comprimento}.
-
-Entregue um laudo completo com exatamente estas seções:
-
-1) FORMATO DO ROSTO
-Identifique o formato com justificativa — cite as características faciais visíveis que levaram a essa conclusão.
-
-2) OS 3 MELHORES CORTES
-Para cada corte: nome técnico, por que valoriza esse formato, comprimento ideal, como pedir ao cabeleireiro com termos exatos.
-
-3) CORTES A EVITAR
-Liste os que prejudicam esse formato e explique exatamente por quê.
-
-4) FRANJA
-Funciona para esse formato? Qual modelo? Como equilibra as proporções?
-
-5) ADAPTAÇÃO PARA O CABELO ATUAL
-Como os cortes recomendados se adaptam ao cabelo ${cabelo} de comprimento ${comprimento}.
-
-6) CORES QUE FAVORECEM
-Se conseguir identificar o subtom de pele na foto, indique as cores de cabelo mais favoráveis com nome técnico (ex: loiro dourado acinzentado nível 8).
-
-Use termos técnicos que a pessoa possa mostrar diretamente ao cabeleireiro.`;
-
   try {
-    const resp = await fetch(`${BACKEND_URL}/api/gerar`, {
+    // Endpoint dedicado /api/visagismo — CORS garantido em qualquer resposta
+    const resp = await fetch(`${BACKEND_URL}/api/visagismo`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        prompt,
-        system: 'Você é especialista em visagismo. Responda em português do Brasil com linguagem técnica, clara e direta.',
-        maxTokens: 1800,
-        artefato: '09_visagismo',
-        imagem: { base64: base64Envio, mediaType: mediaTypeEnvio },
+        imagem: { base64: base64Envio, mediaType: 'image/jpeg' },
+        cabelo,
+        comprimento,
       }),
     });
 
