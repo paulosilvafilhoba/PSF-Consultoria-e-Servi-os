@@ -79,7 +79,7 @@ async function chamarBackend(prompt, system, maxTokens) {
   const resp = await fetch(`${BACKEND_URL}/api/gerar`, {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ prompt, system, maxTokens })
+    body: JSON.stringify({ prompt, system, maxTokens, artefato: '01_culinaria' })
   });
   const data = await resp.json();
   if (!resp.ok || data.erro) throw new Error(data.erro || 'Erro ao gerar resposta.');
