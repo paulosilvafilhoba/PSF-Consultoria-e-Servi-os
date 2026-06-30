@@ -57,8 +57,28 @@ video{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1)
 .drop-zone:hover,.drop-zone.drag{border-color:#B8860B;background:#08111E}
 .drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .drop-icon{font-size:36px;margin-bottom:10px}
-.drop-txt{font-size:14px;color:#7A9CC8;line-height:1.6}
-.drop-hint{font-size:11px;color:#4A6A9A;margin-top:6px}
+.result-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.act-btn{flex:1;min-width:130px;padding:11px;border-radius:6px;border:none;font-size:13px;
+  font-weight:700;cursor:pointer;transition:all .2s;text-align:center}
+.act-btn.primary{background:#B8860B;color:#08111E}
+.act-btn.primary:hover{background:#D4A00D}
+.act-btn.sec{background:#0A1520;color:#7A9CC8;border:1.5px solid #1A3A6B}
+.act-btn.sec:hover{border-color:#7A9CC8;color:#F5F2EC}
+/* Laudo renderizado em HTML */
+.laudo-html{font-size:15px;line-height:1.8;color:#E5E2D8;font-family:Georgia,serif}
+.laudo-html h1{font-size:20px;font-weight:800;color:#F5F2EC;margin:16px 0 8px}
+.laudo-html h2{font-size:16px;font-weight:700;color:#B8860B;margin:14px 0 6px;border-bottom:1px solid #1A3A6B;padding-bottom:4px}
+.laudo-html h3{font-size:14px;font-weight:700;color:#E5E2D8;margin:10px 0 4px}
+.laudo-html p{margin:6px 0}
+.laudo-html ul,.laudo-html ol{margin:6px 0 6px 20px}
+.laudo-html li{margin:3px 0}
+.laudo-html strong{color:#F5F2EC;font-weight:700}
+.laudo-html em{color:#B8860B;font-style:italic}
+.laudo-html hr{border:none;border-top:1px solid #1A3A6B;margin:14px 0}
+.laudo-html table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+.laudo-html th{background:#0A2040;color:#B8860B;padding:8px 10px;text-align:left;border:1px solid #1A3A6B}
+.laudo-html td{padding:7px 10px;border:1px solid #1A3A6B;vertical-align:top}
+.laudo-html blockquote{border-left:3px solid #B8860B;margin:10px 0;padding:8px 14px;background:#08111E;border-radius:0 6px 6px 0;color:#B8860B;font-style:italic}
 
 /* Preview */
 .preview-wrap{border-radius:10px;overflow:hidden;position:relative;border:1.5px solid #B8860B;aspect-ratio:3/4}
@@ -162,7 +182,11 @@ video{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1)
 
   <div class="result" id="result">
     <div class="result-label">✨ Laudo de Visagismo</div>
-    <div class="result-content" id="result-text"></div>
+    <div class="result-actions" id="result-actions" style="display:none">
+      <button class="act-btn primary" onclick="baixarHTML()">⬇️ Baixar HTML</button>
+      <button class="act-btn sec" onclick="imprimirPDF()">🖨️ Imprimir / PDF</button>
+    </div>
+    <div class="laudo-html" id="result-text"></div>
   </div>
 </main>
 
@@ -350,15 +374,108 @@ Entregue: 1) FORMATO DO ROSTO com justificativa 2) OS 3 MELHORES CORTES — nome
     const data = await resp.json();
     if (!resp.ok || data.erro) throw new Error(data.erro || 'Erro ao gerar resposta.');
 
+    laudoTexto = data.resultado;
     const result = document.getElementById('result');
     result.classList.add('show');
-    document.getElementById('result-text').textContent = data.resultado;
+    document.getElementById('result-text').innerHTML = mdParaHtml(laudoTexto);
+    document.getElementById('result-actions').style.display = 'flex';
     result.scrollIntoView({ behavior: 'smooth' });
   } catch (e) {
     mostrarErro(e.message);
   }
 
   setLoading(false);
+}
+
+// Conversor de Markdown → HTML (subconjunto necessário para o laudo)
+function mdParaHtml(md) {
+  return md
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    // Títulos
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    // Negrito e itálico
+    .replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    // Blockquote
+    .replace(/^&gt; (.+)$/gm,'<blockquote>$1</blockquote>')
+    // HR
+    .replace(/^---+$/gm,'<hr>')
+    // Tabelas simples
+    .replace(/\|(.+)\|\n\|[-| ]+\|\n((?:\|.+\|\n?)*)/g, (_, head, body) => {
+      const ths = head.split('|').filter(c=>c.trim()).map(c=>`<th>${c.trim()}</th>`).join('');
+      const rows = body.trim().split('\n').map(row => {
+        const tds = row.split('|').filter(c=>c.trim()).map(c=>`<td>${c.trim()}</td>`).join('');
+        return `<tr>${tds}</tr>`;
+      }).join('');
+      return `<table><thead><tr>${ths}</tr></thead><tbody>${rows}</tbody></table>`;
+    })
+    // Listas
+    .replace(/^- (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
+    .replace(/^\d+\. (.+)$/gm,'<li>$1</li>')
+    // Parágrafos (linhas sem tag)
+    .split('\n').map(l => {
+      if (!l.trim()) return '';
+      if (/^<(h[1-6]|ul|ol|li|hr|table|blockquote|tr|th|td)/.test(l.trim())) return l;
+      return `<p>${l}</p>`;
+    }).join('\n');
+}
+
+// Download como HTML estilizado
+let laudoTexto = '';
+function baixarHTML() {
+  const htmlContent = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Laudo de Visagismo — IA no Bolso</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#111;line-height:1.7}
+  h1{font-size:24px;color:#1a365d;border-bottom:3px solid #B8860B;padding-bottom:8px;margin-bottom:16px}
+  h2{font-size:17px;color:#1a365d;margin-top:24px;margin-bottom:6px;border-left:4px solid #B8860B;padding-left:10px}
+  h3{font-size:15px;color:#2d3748;margin-top:16px;margin-bottom:4px}
+  p{margin:6px 0}ul,ol{margin:6px 0 6px 20px}li{margin:3px 0}
+  strong{color:#1a365d}em{color:#744210}
+  hr{border:none;border-top:1px solid #e2e8f0;margin:18px 0}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+  th{background:#1a365d;color:#fff;padding:8px 12px;text-align:left}
+  td{padding:7px 12px;border:1px solid #e2e8f0}tr:nth-child(even) td{background:#f8fafc}
+  blockquote{border-left:4px solid #B8860B;margin:12px 0;padding:10px 16px;background:#fffbeb;color:#744210;border-radius:0 6px 6px 0}
+  .rodape{margin-top:40px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:11px;color:#718096;text-align:center}
+  @media print{body{margin:0;max-width:100%}.rodape{position:fixed;bottom:0;width:100%}}
+</style>
+</head>
+<body>
+${mdParaHtml(laudoTexto).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&')}
+<div class="rodape">Laudo gerado por IA no Bolso — Paulo da Silva Filho · psfeditoraeconsultoria.com.br</div>
+</body></html>`;
+  const blob = new Blob([htmlContent], {type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'laudo_visagismo.html';
+  a.click();
+}
+
+function imprimirPDF() {
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laudo de Visagismo</title>
+<style>body{font-family:Arial,sans-serif;max-width:800px;margin:30px auto;padding:20px;color:#111;line-height:1.7}
+h1{font-size:22px;color:#1a365d;border-bottom:3px solid #B8860B;padding-bottom:8px}
+h2{font-size:16px;color:#1a365d;margin-top:20px;border-left:4px solid #B8860B;padding-left:10px}
+h3{font-size:14px;color:#2d3748;margin-top:14px}p{margin:5px 0}ul,ol{margin:5px 0 5px 20px}li{margin:2px 0}
+strong{color:#1a365d}hr{border:none;border-top:1px solid #e2e8f0;margin:14px 0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12px}
+th{background:#1a365d;color:#fff;padding:7px 10px;text-align:left}td{padding:6px 10px;border:1px solid #e2e8f0}
+blockquote{border-left:4px solid #B8860B;margin:10px 0;padding:8px 14px;background:#fffbeb;color:#744210}
+@media print{body{margin:0}}</style></head><body>
+${mdParaHtml(laudoTexto).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&')}
+<p style="margin-top:30px;font-size:10px;color:#718096;text-align:center;border-top:1px solid #e2e8f0;padding-top:8px">Laudo gerado por IA no Bolso — psfeditoraeconsultoria.com.br</p>
+</body></html>`);
+  win.document.close();
+  setTimeout(()=>{win.focus();win.print();},600);
 }
 
 // ── Utilitários ───────────────────────────────────────────────────────
