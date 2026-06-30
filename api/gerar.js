@@ -22,6 +22,16 @@
 
 import { waitUntil } from '@vercel/functions';
 
+// Aumenta o limite do body parser para aceitar imagens em base64
+// O padrão da Vercel é 4.5 MB — imagens podem ultrapassar facilmente
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '12mb',
+    },
+  },
+};
+
 export default async function handler(req, res) {
   // CORS precisa ser definido ANTES de qualquer verificação de método,
   // senão a requisição OPTIONS (preflight) é rejeitada sem os headers
