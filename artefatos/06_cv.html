@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>📄 Gerador de CV — IA no Bolso</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',Arial,sans-serif;background:#0D1B2A;color:#F5F2EC;min-height:100vh;display:flex;flex-direction:column}
+.header{background:#08111E;border-bottom:2px solid #B8860B;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.logo{height:40px;width:auto}
+.header-title{font-size:13px;color:#7A9CC8;letter-spacing:0.5px}
+.main{flex:1;padding:32px 24px;max-width:700px;margin:0 auto;width:100%}
+h1{font-size:26px;font-weight:800;color:#F5F2EC;margin-bottom:6px}
+.sub{font-size:14px;color:#7A9CC8;font-style:italic;margin-bottom:28px;line-height:1.6;font-family:Georgia,serif}
+label{display:block;font-size:12px;font-weight:600;color:#B8860B;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;margin-top:16px}
+input,textarea,select{width:100%;background:#08111E;border:1.5px solid #1A3A6B;border-radius:6px;padding:10px 14px;color:#F5F2EC;font-size:14px;font-family:inherit;outline:none;transition:border .2s;resize:vertical}
+input:focus,textarea:focus,select:focus{border-color:#B8860B}
+textarea{min-height:100px}
+.btn{background:#B8860B;color:#08111E;border:none;border-radius:6px;padding:13px 28px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-top:20px;transition:background .2s;letter-spacing:0.5px}
+.btn:hover{background:#D4A00D}
+.btn:disabled{background:#4A3A1A;color:#6A5A2A;cursor:not-allowed}
+.result{background:#0A1520;border:1.5px solid #1A3A6B;border-radius:8px;padding:20px;margin-top:24px;display:none}
+.result.show{display:block}
+.result-label{font-size:11px;color:#B8860B;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;font-weight:600}
+.result-content{font-size:15px;line-height:1.8;color:#E5E2D8;font-family:Georgia,serif;white-space:pre-wrap}
+.spinner{display:inline-block;width:18px;height:18px;border:2.5px solid #4A3A1A;border-top-color:#B8860B;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.footer{text-align:center;padding:16px;font-size:11px;color:#3A5A7A;border-top:1px solid #0F2035}
+.aviso{background:#1A0F00;border:1px solid #4A3A00;border-radius:6px;padding:12px 16px;font-size:12px;color:#B8860B;margin-bottom:20px;line-height:1.6}
+.erro{background:#1A0F0F;border:1px solid #4A1A1A;border-radius:6px;padding:12px 16px;font-size:13px;color:#E89A9A;margin-top:16px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:500px){.row2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="header">
+  <img src="../Logo%20PSF.png" class="logo" alt="PSF">
+  <span class="header-title">IA no Bolso · Capítulo 8 · Carreira</span>
+</header>
+<main class="main">
+  <h1>📄 Gerador de CV</h1>
+  <p class="sub">Preencha seus dados e receba um currículo profissional e carta de apresentação prontos.</p>
+  
+  
+<label>Nome completo</label><input id="nome" placeholder="Seu nome completo">
+<div class="row2">
+  <div><label>E-mail</label><input id="email" placeholder="seu@email.com"></div>
+  <div><label>Telefone</label><input id="tel" placeholder="(00) 90000-0000"></div>
+</div>
+<label>Cidade e Estado</label><input id="cidade" placeholder="Ex: Salvador, BA">
+<label>Cargo / Área desejada</label><input id="cargo" placeholder="Ex: Analista de Marketing...">
+<label>Resumo profissional</label><textarea id="resumo" rows="3" placeholder="Sua experiência e destaque..."></textarea>
+<label>Experiências (uma por linha: cargo — empresa — período)</label>
+<textarea id="exp" rows="4" placeholder="Vendedor Sênior — Empresa XYZ — 2021 a 2024"></textarea>
+<label>Formação acadêmica</label><textarea id="form" rows="2" placeholder="Graduação em Administração — UFBA — 2019"></textarea>
+<label>Habilidades</label><input id="skills" placeholder="Excel, CRM, liderança...">
+<label>Vaga específica (cole a descrição, opcional)</label><textarea id="vaga" rows="3"></textarea>
+<button class="btn" id="btn" data-label="📄 Gerar CV + Carta" onclick="gerar()">📄 Gerar CV + Carta de Apresentação</button>
+
+  <div class="result" id="result">
+    <div class="result-label">✨ Resultado da IA</div>
+    <div class="result-content" id="result-text"></div>
+  </div>
+</main>
+<footer class="footer">
+  IA no Bolso — Paulo da Silva Filho · <a href="https://www.psfeditoraeconsultoria.com.br" style="color:#3A5A7A">psfeditoraeconsultoria.com.br</a>
+</footer>
+<script>
+const BACKEND_URL = 'https://psf-consultoria-backend.vercel.app'; // Paulo: troque pela URL real após o deploy
+
+async function chamarBackend(prompt, system, maxTokens) {
+  const resp = await fetch(`${BACKEND_URL}/api/gerar`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ prompt, system, maxTokens })
+  });
+  const data = await resp.json();
+  if (!resp.ok || data.erro) throw new Error(data.erro || 'Erro ao gerar resposta.');
+  return data.resultado;
+}
+function showResult(text) {
+  const r = document.getElementById('result');
+  r.classList.add('show');
+  document.getElementById('result-text').textContent = text;
+  r.scrollIntoView({behavior:'smooth'});
+}
+function showError(msg) {
+  let e = document.getElementById('erro-box');
+  if(!e){
+    e = document.createElement('div');
+    e.id = 'erro-box';
+    e.className = 'erro';
+    document.getElementById('result').insertAdjacentElement('beforebegin', e);
+  }
+  e.textContent = '⚠️ ' + msg;
+  e.style.display = 'block';
+}
+function setLoading(on) {
+  const btn = document.getElementById('btn');
+  btn.disabled = on;
+  btn.innerHTML = on ? '<span class="spinner"></span>Processando...' : btn.dataset.label;
+}
+</script>
+<script>
+async function gerar() {
+  const nome = document.getElementById('nome').value.trim();
+  if(!nome){alert('Informe seu nome!');return;}
+  setLoading(true);
+  try {
+    const temVaga = document.getElementById('vaga').value.trim();
+    const prompt = `Você é especialista em recrutamento e seleção.
+Nome: ${nome} | E-mail: ${document.getElementById('email').value} | Tel: ${document.getElementById('tel').value} | Cidade: ${document.getElementById('cidade').value}
+Cargo desejado: ${document.getElementById('cargo').value}
+Resumo: ${document.getElementById('resumo').value}
+Experiências: ${document.getElementById('exp').value}
+Formação: ${document.getElementById('form').value}
+Habilidades: ${document.getElementById('skills').value}
+${temVaga ? 'Vaga alvo: '+temVaga : ''}
+Crie: 1. CURRÍCULO completo formatado (cabeçalho, objetivo, resumo de qualificações, experiências com verbos de ação, formação, habilidades) 2. CARTA DE APRESENTAÇÃO em 3 parágrafos. Não invente informações.`;
+    const r = await chamarBackend(prompt, 'Você é especialista em RH. Responda em português do Brasil formal.', 1800);
+    showResult(r);
+  } catch(e){showError(e.message);}
+  setLoading(false);
+}
+</script>
+</body></html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🍳 O que cozinhar hoje? — IA no Bolso</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',Arial,sans-serif;background:#0D1B2A;color:#F5F2EC;min-height:100vh;display:flex;flex-direction:column}
+.header{background:#08111E;border-bottom:2px solid #B8860B;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.logo{height:40px;width:auto}
+.header-title{font-size:13px;color:#7A9CC8;letter-spacing:0.5px}
+.main{flex:1;padding:32px 24px;max-width:700px;margin:0 auto;width:100%}
+h1{font-size:26px;font-weight:800;color:#F5F2EC;margin-bottom:6px}
+.sub{font-size:14px;color:#7A9CC8;font-style:italic;margin-bottom:28px;line-height:1.6;font-family:Georgia,serif}
+label{display:block;font-size:12px;font-weight:600;color:#B8860B;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;margin-top:16px}
+input,textarea,select{width:100%;background:#08111E;border:1.5px solid #1A3A6B;border-radius:6px;padding:10px 14px;color:#F5F2EC;font-size:14px;font-family:inherit;outline:none;transition:border .2s;resize:vertical}
+input:focus,textarea:focus,select:focus{border-color:#B8860B}
+textarea{min-height:100px}
+.btn{background:#B8860B;color:#08111E;border:none;border-radius:6px;padding:13px 28px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-top:20px;transition:background .2s;letter-spacing:0.5px}
+.btn:hover{background:#D4A00D}
+.btn:disabled{background:#4A3A1A;color:#6A5A2A;cursor:not-allowed}
+.result{background:#0A1520;border:1.5px solid #1A3A6B;border-radius:8px;padding:20px;margin-top:24px;display:none}
+.result.show{display:block}
+.result-label{font-size:11px;color:#B8860B;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;font-weight:600}
+.result-content{font-size:15px;line-height:1.8;color:#E5E2D8;font-family:Georgia,serif;white-space:pre-wrap}
+.spinner{display:inline-block;width:18px;height:18px;border:2.5px solid #4A3A1A;border-top-color:#B8860B;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.footer{text-align:center;padding:16px;font-size:11px;color:#3A5A7A;border-top:1px solid #0F2035}
+.aviso{background:#1A0F00;border:1px solid #4A3A00;border-radius:6px;padding:12px 16px;font-size:12px;color:#B8860B;margin-bottom:20px;line-height:1.6}
+.erro{background:#1A0F0F;border:1px solid #4A1A1A;border-radius:6px;padding:12px 16px;font-size:13px;color:#E89A9A;margin-top:16px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:500px){.row2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="header">
+  <img src="../Logo%20PSF.png" class="logo" alt="PSF">
+  <span class="header-title">IA no Bolso · Capítulo 1 · Culinária</span>
+</header>
+<main class="main">
+  <h1>🍳 O que cozinhar hoje?</h1>
+  <p class="sub">Informe o que tem na geladeira e receba uma receita completa — sem precisar comprar nada.</p>
+  
+  
+<label>Ingredientes disponíveis</label>
+<textarea id="ingredientes" placeholder="Ex: frango, cebola, alho, tomate, azeite, sal, pimenta, arroz..."></textarea>
+<div class="row2">
+  <div><label>Para quantas pessoas?</label><input type="number" id="pessoas" value="2" min="1" max="20"></div>
+  <div><label>Tempo disponível</label>
+    <select id="tempo">
+      <option value="15">Até 15 minutos</option>
+      <option value="30" selected>Até 30 minutos</option>
+      <option value="60">Até 1 hora</option>
+      <option value="999">Sem pressa</option>
+    </select>
+  </div>
+</div>
+<div class="row2">
+  <div><label>Habilidade na cozinha</label>
+    <select id="nivel"><option value="iniciante">Iniciante</option><option value="intermediário" selected>Intermediário</option><option value="avançado">Avançado</option></select>
+  </div>
+  <div><label>Refeição</label>
+    <select id="refeicao"><option value="café da manhã">Café da manhã</option><option value="almoço" selected>Almoço</option><option value="jantar">Jantar</option><option value="lanche">Lanche</option></select>
+  </div>
+</div>
+<button class="btn" id="btn" data-label="🍳 Gerar receita" onclick="gerar()">🍳 Gerar receita</button>
+
+  <div class="result" id="result">
+    <div class="result-label">✨ Resultado da IA</div>
+    <div class="result-content" id="result-text"></div>
+  </div>
+</main>
+<footer class="footer">
+  IA no Bolso — Paulo da Silva Filho · <a href="https://www.psfeditoraeconsultoria.com.br" style="color:#3A5A7A">psfeditoraeconsultoria.com.br</a>
+</footer>
+<script>
+const BACKEND_URL = 'https://psf-consultoria-backend.vercel.app'; // Paulo: troque pela URL real após o deploy
+
+async function chamarBackend(prompt, system, maxTokens) {
+  const resp = await fetch(`${BACKEND_URL}/api/gerar`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ prompt, system, maxTokens })
+  });
+  const data = await resp.json();
+  if (!resp.ok || data.erro) throw new Error(data.erro || 'Erro ao gerar resposta.');
+  return data.resultado;
+}
+function showResult(text) {
+  const r = document.getElementById('result');
+  r.classList.add('show');
+  document.getElementById('result-text').textContent = text;
+  r.scrollIntoView({behavior:'smooth'});
+}
+function showError(msg) {
+  let e = document.getElementById('erro-box');
+  if(!e){
+    e = document.createElement('div');
+    e.id = 'erro-box';
+    e.className = 'erro';
+    document.getElementById('result').insertAdjacentElement('beforebegin', e);
+  }
+  e.textContent = '⚠️ ' + msg;
+  e.style.display = 'block';
+}
+function setLoading(on) {
+  const btn = document.getElementById('btn');
+  btn.disabled = on;
+  btn.innerHTML = on ? '<span class="spinner"></span>Processando...' : btn.dataset.label;
+}
+</script>
+<script>
+async function gerar() {
+  const ing = document.getElementById('ingredientes').value.trim();
+  if(!ing){alert('Liste pelo menos alguns ingredientes!');return;}
+  setLoading(true);
+  try {
+    const prompt = `Você é um chef profissional com especialidade em culinária doméstica e aproveitamento de alimentos.
+Ingredientes disponíveis: ${ing}
+Pessoas: ${document.getElementById('pessoas').value}
+Tempo máximo: ${document.getElementById('tempo').value} minutos
+Habilidade culinária: ${document.getElementById('nivel').value}
+Refeição: ${document.getElementById('refeicao').value}
+REGRAS: Use APENAS os ingredientes listados. Se faltar algo essencial, sugira o substituto mais próximo do que foi listado.
+Entregue: 1. NOME DA RECEITA 2. INGREDIENTES com medidas exatas 3. MODO DE PREPARO em etapas numeradas, com tempo de cada etapa 4. COMO SABER QUE FICOU NO PONTO 5. DICA DO CHEF`;
+    const r = await chamarBackend(prompt, 'Você é um chef profissional. Responda em português do Brasil com linguagem clara e prática.');
+    showResult(r);
+  } catch(e) {showError(e.message);}
+  setLoading(false);
+}
+</script>
+</body></html>

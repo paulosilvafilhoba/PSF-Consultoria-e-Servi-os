@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🎲 Me Surpreenda — IA no Bolso</title>
+<style>
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',Arial,sans-serif;background:#0D1B2A;color:#F5F2EC;min-height:100vh;display:flex;flex-direction:column}
+.header{background:#08111E;border-bottom:2px solid #B8860B;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.logo{height:40px;width:auto}
+.header-title{font-size:13px;color:#7A9CC8;letter-spacing:0.5px}
+.main{flex:1;padding:32px 24px;max-width:700px;margin:0 auto;width:100%}
+h1{font-size:26px;font-weight:800;color:#F5F2EC;margin-bottom:6px}
+.sub{font-size:14px;color:#7A9CC8;font-style:italic;margin-bottom:28px;line-height:1.6;font-family:Georgia,serif}
+label{display:block;font-size:12px;font-weight:600;color:#B8860B;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;margin-top:16px}
+input,textarea,select{width:100%;background:#08111E;border:1.5px solid #1A3A6B;border-radius:6px;padding:10px 14px;color:#F5F2EC;font-size:14px;font-family:inherit;outline:none;transition:border .2s;resize:vertical}
+input:focus,textarea:focus,select:focus{border-color:#B8860B}
+textarea{min-height:100px}
+.btn{background:#B8860B;color:#08111E;border:none;border-radius:6px;padding:13px 28px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-top:20px;transition:background .2s;letter-spacing:0.5px}
+.btn:hover{background:#D4A00D}
+.btn:disabled{background:#4A3A1A;color:#6A5A2A;cursor:not-allowed}
+.result{background:#0A1520;border:1.5px solid #1A3A6B;border-radius:8px;padding:20px;margin-top:24px;display:none}
+.result.show{display:block}
+.result-label{font-size:11px;color:#B8860B;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;font-weight:600}
+.result-content{font-size:15px;line-height:1.8;color:#E5E2D8;font-family:Georgia,serif;white-space:pre-wrap}
+.spinner{display:inline-block;width:18px;height:18px;border:2.5px solid #4A3A1A;border-top-color:#B8860B;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.footer{text-align:center;padding:16px;font-size:11px;color:#3A5A7A;border-top:1px solid #0F2035}
+.tag{display:inline-block;background:#0F2035;border:1px solid #1A3A6B;border-radius:4px;padding:3px 10px;font-size:11px;color:#7A9CC8;margin:2px}
+.aviso{background:#1A0F00;border:1px solid #4A3A00;border-radius:6px;padding:12px 16px;font-size:12px;color:#B8860B;margin-bottom:20px;line-height:1.6}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:500px){.row2{grid-template-columns:1fr}}
+
+.progress-wrap{background:#0A1520;border-radius:10px;height:6px;margin-bottom:32px;overflow:hidden}
+.progress-fill{height:100%;background:#B8860B;border-radius:10px;transition:width .4s ease}
+.step{display:none}
+.step.active{display:block}
+.step-title{font-size:22px;font-weight:800;color:#F5F2EC;margin-bottom:8px}
+.step-sub{font-size:14px;color:#7A9CC8;font-family:Georgia,serif;margin-bottom:24px;line-height:1.6}
+.opcoes{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px}
+.opcao{background:#0A1520;border:1.5px solid #1A3A6B;border-radius:8px;padding:12px 14px;
+  font-size:14px;color:#E5E2D8;cursor:pointer;text-align:left;transition:all .2s;display:flex;align-items:center;gap:10px}
+.opcao:hover,.opcao.selected{border-color:#B8860B;background:#08111E;color:#F5F2EC}
+.opcao.selected{background:#1A0F00}
+.opcao-emoji{font-size:20px;flex-shrink:0}
+.nav-btns{display:flex;gap:12px;margin-top:24px}
+.btn-sec{background:transparent;color:#7A9CC8;border:1.5px solid #1A3A6B;border-radius:6px;
+  padding:12px 24px;font-size:14px;cursor:pointer;flex:0}
+.btn-sec:hover{border-color:#7A9CC8;color:#F5F2EC}
+.btn{flex:1}
+.loc-card{background:#0A1520;border:1.5px solid #1A3A6B;border-radius:10px;padding:20px;text-align:center;margin:16px 0}
+.loc-icon{font-size:40px;margin-bottom:12px}
+.loc-txt{font-size:14px;color:#7A9CC8;line-height:1.6}
+.result-grid{display:grid;gap:14px;margin-top:20px}
+.result-card{background:#0A1520;border:1.5px solid #1A3A6B;border-radius:10px;padding:18px;transition:border-color .2s}
+.result-card:hover{border-color:#B8860B}
+.result-card-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.result-num{background:#B8860B;color:#08111E;width:26px;height:26px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0}
+.result-tipo{font-size:12px;color:#B8860B;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.result-desc{font-size:15px;color:#E5E2D8;line-height:1.7;font-family:Georgia,serif;margin-bottom:12px}
+.maps-btn{display:inline-flex;align-items:center;gap:8px;background:#1A3A6B;color:#F5F2EC;
+  border:none;border-radius:6px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;
+  text-decoration:none;transition:background .2s}
+.maps-btn:hover{background:#B8860B;color:#08111E}
+.reiniciar{background:transparent;border:1.5px solid #1A3A6B;color:#7A9CC8;border-radius:6px;
+  padding:11px 22px;font-size:14px;cursor:pointer;margin-top:20px;width:100%}
+.reiniciar:hover{border-color:#7A9CC8;color:#F5F2EC}
+.passo-ind{font-size:11px;color:#4A6A9A;text-align:center;margin-bottom:8px;letter-spacing:1px}
+.erro-card{background:#1A0F0F;border:1.5px solid #4A1A1A;border-radius:8px;padding:16px;color:#E89A9A;font-size:13px;margin-top:16px}
+</style>
+</head>
+<body>
+<header class="header">
+  <img src="../Logo%20PSF.png" class="logo" alt="PSF">
+  <span class="header-title">IA no Bolso · Capítulo 13</span>
+</header>
+<main class="main" style="max-width:520px">
+  <h1>🎲 Me Surpreenda</h1>
+  <p class="sub">Responda 5 perguntas rápidas e a IA cria uma experiência única para você — agora, onde você está.</p>
+
+  <div class="progress-wrap"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+  <div class="passo-ind" id="passo-ind">Passo 0 de 5</div>
+
+  <div class="step active" id="step0">
+    <div class="step-title">Olá! Vamos te surpreender 🎲</div>
+    <div class="step-sub">
+      Em 5 perguntas rápidas, a IA aprende quem você é.<br>
+      Depois usamos sua localização para criar <strong>3 sugestões personalizadas</strong> para agora.
+    </div>
+    <label>Como posso te chamar?</label>
+    <input id="nome" placeholder="Seu nome">
+    <label>Quantos anos você tem?</label>
+    <input type="number" id="idade" value="30" min="10" max="99">
+    <div class="nav-btns">
+      <button class="btn" id="btn" data-label="Começar →" onclick="proximo(1)">Começar →</button>
+    </div>
+  </div>
+
+  <div class="step" id="step1">
+    <div class="step-title">Seus hobbies</div>
+    <div class="step-sub">Selecione até 3 que mais combinam com você.</div>
+    <div class="opcoes" id="hobbies-opcoes">
+      <div class="opcao" onclick="toggle(this)"><span class="opcao-emoji">🎵</span> Música ao vivo</div>
+      <div class="opcao" onclick="toggle(this)"><span class="opcao-emoji">🌿</span> Natureza e trilhas</div>
+      <div class="opcao" onclick="toggle(this)"><span class="opcao-emoji">🍴</span> Gastronomia</div>
+      <div class="opcao" onclick="toggle(this)"><span class="opcao-emoji">🎨</span> Arte e cultura</div>
+      <div class="opcao" onclick="toggle(this)"><span class="opcao-emoji">⚽</span> Esportes</div>
+      <div class="opcao" onclick="toggle(this)"><span class="opcao-emoji">📚</span> Leitura e estudo</div>
+      <div class="opcao" onclick="toggle(this)"><span class="opcao-emoji">🛍️</span> Compras</div>
+      <div class="opcao" onclick="toggle(this)"><span class="opcao-emoji">🎬</span> Cinema e séries</div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-sec" onclick="proximo(0)">← Voltar</button>
+      <button class="btn" onclick="proximo(2)">Próximo →</button>
+    </div>
+  </div>
+
+  <div class="step" id="step2">
+    <div class="step-title">O que você mais gosta de comer?</div>
+    <div class="step-sub">Escolha sua preferência principal.</div>
+    <div class="opcoes" id="comida-opcoes">
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">🍖</span> Comida regional</div>
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">🍣</span> Japonesa</div>
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">🍕</span> Italiana</div>
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">🥗</span> Vegetariana/vegana</div>
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">🌮</span> Fast food gourmet</div>
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">🤷</span> Qualquer coisa!</div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-sec" onclick="proximo(1)">← Voltar</button>
+      <button class="btn" onclick="proximo(3)">Próximo →</button>
+    </div>
+  </div>
+
+  <div class="step" id="step3">
+    <div class="step-title">Qual é a sua trilha sonora?</div>
+    <div class="step-sub">O estilo musical diz muito sobre o que você vai curtir.</div>
+    <div class="opcoes" id="musica-opcoes">
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">🎸</span> Rock / MPB</div>
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">🎺</span> Samba / Pagode</div>
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">🎵</span> Forró / Axé</div>
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">🎧</span> Pop / Eletrônico</div>
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">🎷</span> Jazz / Clássico</div>
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">🎤</span> Qualquer ritmo!</div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-sec" onclick="proximo(2)">← Voltar</button>
+      <button class="btn" onclick="proximo(4)">Próximo →</button>
+    </div>
+  </div>
+
+  <div class="step" id="step4">
+    <div class="step-title">Como está seu momento agora?</div>
+    <div class="step-sub">Isso ajuda a IA a calibrar a surpresa certa para agora.</div>
+    <div class="opcoes" id="momento-opcoes" style="grid-template-columns:1fr">
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">😴</span> Relaxado — quero algo tranquilo</div>
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">⚡</span> Animado — quero agito e novidade</div>
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">🍽️</span> Com fome — quero comer algo especial</div>
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">👥</span> Com acompanhante — surpresa para dois</div>
+      <div class="opcao" onclick="unico(this)"><span class="opcao-emoji">🌳</span> Com vontade de sair de casa</div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-sec" onclick="proximo(3)">← Voltar</button>
+      <button class="btn" id="btn-final" onclick="buscarLocalizacao()">Me Surpreenda! 🎲</button>
+    </div>
+  </div>
+
+  <div class="step" id="step5">
+    <div class="loc-card">
+      <div class="loc-icon">📍</div>
+      <div class="loc-txt"><strong>Precisamos da sua localização</strong><br>
+      Para encontrar experiências perto de você agora.</div>
+    </div>
+    <button class="btn" id="btn-loc" onclick="pegarLocalizacao()">📍 Permitir localização</button>
+    <button class="btn-sec" style="width:100%;margin-top:10px" onclick="pularLocalizacao()">Pular — usar sugestões gerais</button>
+  </div>
+
+  <div class="step" id="step6">
+    <div class="loc-card">
+      <div class="loc-icon">🧠</div>
+      <div class="loc-txt" id="loading-txt">A IA está criando suas surpresas personalizadas...<br><br>
+      <span class="spinner"></span></div>
+    </div>
+  </div>
+
+  <div class="step" id="step7">
+    <div class="step-title" id="resultado-titulo">Suas surpresas de hoje!</div>
+    <div class="step-sub" id="resultado-sub"></div>
+    <div class="result-grid" id="result-grid"></div>
+    <button class="reiniciar" onclick="reiniciar()">🔄 Gerar novas surpresas</button>
+  </div>
+
+  <div class="step" id="step-erro">
+    <div class="erro-card" id="erro-txt"></div>
+    <button class="reiniciar" onclick="reiniciar()">🔄 Tentar de novo</button>
+  </div>
+
+</main>
+<footer class="footer">
+  IA no Bolso — Paulo da Silva Filho · <a href="https://www.psfeditoraeconsultoria.com.br" style="color:#3A5A7A">psfeditoraeconsultoria.com.br</a>
+</footer>
+<script>
+// ════════════════════════════════════════════════════════════════════
+// CONFIGURAÇÃO — aponta para o backend próprio (Opção A)
+// Depois do deploy na Vercel, troque pela URL real do seu projeto
+// ════════════════════════════════════════════════════════════════════
+const BACKEND_URL = 'https://psf-consultoria-backend.vercel.app';
+
+const usuario = { nome:'', idade:0, hobbies:[], comida:'', musica:'', momento:'', lat:0, lng:0 };
+const TOTAL_PASSOS = 5;
+
+// Identificador anônimo do dispositivo — persiste entre visitas sem precisar de login
+function getDeviceId() {
+  let id = localStorage.getItem('me_surpreenda_device_id');
+  if (!id) {
+    id = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    localStorage.setItem('me_surpreenda_device_id', id);
+  }
+  return id;
+}
+
+function atualizar_prog(n) {
+  document.getElementById('prog').style.width = (n/TOTAL_PASSOS*100)+'%';
+  document.getElementById('passo-ind').textContent = n < TOTAL_PASSOS ? `Passo ${n} de ${TOTAL_PASSOS}` : 'Pronto!';
+}
+
+function irPara(stepId) {
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  document.getElementById(stepId).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function proximo(step) {
+  if(step===1) {
+    usuario.nome = document.getElementById('nome').value.trim() || 'Você';
+    usuario.idade = parseInt(document.getElementById('idade').value) || 30;
+  }
+  if(step===2) {
+    const sel = [...document.querySelectorAll('#hobbies-opcoes .selected')].map(e=>e.textContent.trim());
+    if(!sel.length) { alert('Selecione pelo menos 1 hobby!'); return; }
+    usuario.hobbies = sel;
+  }
+  if(step===3) {
+    const sel = document.querySelector('#comida-opcoes .selected');
+    if(!sel) { alert('Selecione uma preferência de comida!'); return; }
+    usuario.comida = sel.textContent.trim();
+  }
+  if(step===4) {
+    const sel = document.querySelector('#musica-opcoes .selected');
+    if(!sel) { alert('Selecione um estilo!'); return; }
+    usuario.musica = sel.textContent.trim();
+  }
+  irPara('step'+step);
+  atualizar_prog(step);
+}
+
+function toggle(el) {
+  const selecionados = el.closest('.opcoes').querySelectorAll('.selected');
+  if(el.classList.contains('selected')) {
+    el.classList.remove('selected');
+  } else if(selecionados.length < 3) {
+    el.classList.add('selected');
+  }
+}
+function unico(el) {
+  el.closest('.opcoes').querySelectorAll('.opcao').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function buscarLocalizacao() {
+  const sel = document.querySelector('#momento-opcoes .selected');
+  if(!sel) { alert('Selecione como está seu momento!'); return; }
+  usuario.momento = sel.textContent.trim();
+  irPara('step5');
+  atualizar_prog(5);
+}
+
+function pegarLocalizacao() {
+  if(!navigator.geolocation) { pularLocalizacao(); return; }
+  const btn = document.getElementById('btn-loc');
+  btn.disabled = true;
+  btn.textContent = 'Buscando localização...';
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      usuario.lat = pos.coords.latitude;
+      usuario.lng = pos.coords.longitude;
+      gerarSurpresas();
+    },
+    () => { pularLocalizacao(); },
+    {timeout:8000, enableHighAccuracy:true}
+  );
+}
+
+function pularLocalizacao() {
+  usuario.lat = 0; usuario.lng = 0;
+  gerarSurpresas();
+}
+
+async function gerarSurpresas() {
+  irPara('step6');
+
+  try {
+    // Chama o BACKEND PRÓPRIO — nunca a API da Anthropic diretamente.
+    // A chave de API fica protegida no servidor, não no navegador.
+    const resp = await fetch(`${BACKEND_URL}/api/surpreenda`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: usuario.nome,
+        idade: usuario.idade,
+        hobbies: usuario.hobbies,
+        comida: usuario.comida,
+        musica: usuario.musica,
+        momento: usuario.momento,
+        lat: usuario.lat,
+        lng: usuario.lng,
+      }),
+    });
+
+    if (!resp.ok) throw new Error('Não foi possível gerar as surpresas agora.');
+
+    const dados = await resp.json();
+    mostrarResultados(dados.sugestoes);
+
+    // Salva o perfil e o histórico em segundo plano (não bloqueia a experiência)
+    fetch(`${BACKEND_URL}/api/salvar-perfil`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        deviceId: getDeviceId(),
+        nome: usuario.nome,
+        idade: usuario.idade,
+        hobbies: usuario.hobbies,
+        comida: usuario.comida,
+        musica: usuario.musica,
+        momento: usuario.momento,
+        lat: usuario.lat,
+        lng: usuario.lng,
+        sugestoes: dados.sugestoes,
+      }),
+    }).catch(()=>{}); // falha silenciosa — não é crítico para a experiência
+
+  } catch(e) {
+    document.getElementById('erro-txt').textContent =
+      'Não conseguimos gerar suas surpresas agora. Verifique sua conexão e tente novamente. (' + e.message + ')';
+    irPara('step-erro');
+  }
+}
+
+function mostrarResultados(sugestoes) {
+  document.getElementById('resultado-titulo').textContent = `Suas surpresas, ${usuario.nome}! 🎲`;
+  document.getElementById('resultado-sub').textContent = `Escolhidas pela IA com base no seu perfil e no momento atual.`;
+  const grid = document.getElementById('result-grid');
+  grid.innerHTML = sugestoes.map((s,i)=>`
+    <div class="result-card">
+      <div class="result-card-header">
+        <div class="result-num">${i+1}</div>
+        <div class="result-tipo">${s.emoji} ${s.tipo}</div>
+      </div>
+      <div style="font-size:16px;font-weight:700;color:#F5F2EC;margin-bottom:8px">${s.titulo}</div>
+      <div class="result-desc">${s.descricao}</div>
+      <a class="maps-btn" href="https://maps.google.com/?q=${encodeURIComponent(s.busca)}" target="_blank">
+        🗺️ Abrir no Google Maps
+      </a>
+    </div>
+  `).join('');
+  atualizar_prog(5);
+  irPara('step7');
+}
+
+function reiniciar() {
+  document.querySelectorAll('.opcao').forEach(o=>o.classList.remove('selected'));
+  document.getElementById('nome').value = '';
+  atualizar_prog(0);
+  irPara('step0');
+}
+
+atualizar_prog(0);
+</script>
+</body>
+</html>
