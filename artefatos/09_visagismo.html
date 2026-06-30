@@ -328,16 +328,22 @@ async function analisar() {
   setLoading(true);
   esconderErro();
 
-  // imagemBase64 já foi comprimido em carregarPreview (400px/55% ≈ 15–40 KB)
-  // Envio direto — sem risco de body grande
+  // imagemBase64 já comprimido em carregarPreview (400px/55% ≈ 15–40 KB)
+  // Usa /api/gerar que já está deployado e funcionando — sem depender de novo endpoint
+  const prompt = `Você é uma especialista em visagismo. Analise a foto enviada.
+Cabelo: ${cabelo}, comprimento ${comprimento}.
+Entregue: 1) FORMATO DO ROSTO com justificativa 2) OS 3 MELHORES CORTES — nome técnico, por que valoriza, como pedir ao cabeleireiro 3) CORTES A EVITAR 4) FRANJA — funciona? qual modelo? 5) ADAPTAÇÃO para cabelo ${cabelo} ${comprimento} 6) CORES QUE FAVORECEM com nome técnico.`;
+
   try {
-    const resp = await fetch(`${BACKEND_URL}/api/visagismo`, {
+    const resp = await fetch(`${BACKEND_URL}/api/gerar`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        prompt,
+        system: 'Você é especialista em visagismo. Responda em português do Brasil.',
+        maxTokens: 1800,
+        artefato: '09_visagismo',
         imagem: { base64: imagemBase64, mediaType: 'image/jpeg' },
-        cabelo,
-        comprimento,
       }),
     });
 
