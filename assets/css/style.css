@@ -285,3 +285,7 @@ button, input, textarea, select { font: inherit; }
   .footer__grid { grid-template-columns:1fr; }
   .footer__bottom { flex-direction:column; }
 }
+
+/* Selo de link de compra em cards pequenos de livro (adicionado) */
+.buy-link { display:inline-flex; padding:8px 14px; border:1px solid rgba(0,255,154,.35); background:rgba(0,255,154,.08); border-radius:999px; color:var(--green); font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; text-decoration:none; transition: box-shadow .2s ease, border-color .2s ease; }
+.buy-link:hover { box-shadow: var(--shadow-green); border-color: var(--green); }
